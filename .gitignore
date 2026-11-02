@@ -1,0 +1,21 @@
+target/
+data/
+*.db
+*.mv.db
+*.trace.db
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+.factorypath
+.DS_Store
+
+# Ambiente local e segredos
+.env
+.env.*
+!.env.example
+*.log

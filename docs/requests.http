@@ -1,0 +1,202 @@
+### =====================================================================
+### Requisições para demonstração — IntelliJ HTTP Client / VS Code REST Client
+### As datas abaixo são exemplos para novembro de 2026. Se executar em outra data, ajuste retirada e devolução para datas válidas (retirada hoje ou no futuro).
+### =====================================================================
+
+@base = http://localhost:8080/api
+
+### ---------- DASHBOARD ----------
+GET {{base}}/dashboard
+
+### ---------- VEÍCULOS ----------
+
+### Lista paginada
+GET {{base}}/veiculos?page=0&size=5
+
+### Filtros combinados + ordenação
+GET {{base}}/veiculos?categoria=SUV&status=DISPONIVEL&valorMax=250&sort=valorDiaria,asc
+
+### Filtro com valor inválido -> 400
+GET {{base}}/veiculos?status=VOANDO
+
+### Busca por id inexistente -> 404
+GET {{base}}/veiculos/9999
+
+### Cadastro -> 201 + Location
+POST {{base}}/veiculos
+Content-Type: application/json
+
+{
+  "placa": "ZZZ9Z99",
+  "marca": "Renault",
+  "modelo": "Kwid",
+  "ano": 2024,
+  "categoria": "ECONOMICO",
+  "valorDiaria": 95.00,
+  "quilometragem": 1200
+}
+
+### Cadastro inválido (placa e diária) -> 400 com lista de campos
+POST {{base}}/veiculos
+Content-Type: application/json
+
+{
+  "placa": "123",
+  "marca": "Renault",
+  "modelo": "Kwid",
+  "ano": 2024,
+  "categoria": "ECONOMICO",
+  "valorDiaria": 0,
+  "quilometragem": 1200
+}
+
+### Placa duplicada -> 409
+POST {{base}}/veiculos
+Content-Type: application/json
+
+{
+  "placa": "ABC1D23",
+  "marca": "Fiat",
+  "modelo": "Argo",
+  "ano": 2023,
+  "categoria": "ECONOMICO",
+  "valorDiaria": 120.00,
+  "quilometragem": 100
+}
+
+### Atualização
+PUT {{base}}/veiculos/2
+Content-Type: application/json
+
+{
+  "placa": "RIO2E45",
+  "marca": "Hyundai",
+  "modelo": "HB20",
+  "ano": 2022,
+  "categoria": "ECONOMICO",
+  "valorDiaria": 135.00,
+  "quilometragem": 28400,
+  "status": "DISPONIVEL"
+}
+
+### Exclusão de veículo alugado -> 409
+DELETE {{base}}/veiculos/1
+
+### ---------- CLIENTES ----------
+
+### Filtro por nome
+GET {{base}}/clientes?nome=silva
+
+### CPF inválido -> 400 (campo "cpf")
+POST {{base}}/clientes
+Content-Type: application/json
+
+{
+  "nome": "Fulano de Tal",
+  "cpf": "111.111.111-11",
+  "email": "fulano@email.com",
+  "dataNascimento": "1992-05-10",
+  "cnhNumero": "12345678901",
+  "cnhValidade": "2032-05-10"
+}
+
+### Cadastro válido -> 201
+POST {{base}}/clientes
+Content-Type: application/json
+
+{
+  "nome": "Beatriz Alves",
+  "cpf": "987.654.321-00",
+  "email": "beatriz@email.com",
+  "telefone": "(86) 99999-0005",
+  "dataNascimento": "1993-09-20",
+  "cnhNumero": "56789012345",
+  "cnhValidade": "2032-09-20"
+}
+
+### Exclusão de cliente com locações -> 409
+DELETE {{base}}/clientes/1
+
+### ---------- LOCAÇÕES ----------
+
+### Lista de locações ativas
+GET {{base}}/locacoes?status=ATIVA
+
+### Locações atrasadas
+GET {{base}}/locacoes?atrasadas=true
+
+### Regra: cliente 23 anos x veículo de luxo (Ana = id 3, BMW = id 6) -> 422
+POST {{base}}/locacoes
+Content-Type: application/json
+
+{
+  "clienteId": 3,
+  "veiculoId": 6,
+  "dataRetirada": "2026-11-02",
+  "dataPrevistaDevolucao": "2026-11-06"
+}
+
+### Regra: CNH vencida (Pedro = id 4) -> 422
+POST {{base}}/locacoes
+Content-Type: application/json
+
+{
+  "clienteId": 4,
+  "veiculoId": 2,
+  "dataRetirada": "2026-11-02",
+  "dataPrevistaDevolucao": "2026-11-06"
+}
+
+### Regra: veículo em manutenção (Mobi = id 8) -> 422
+POST {{base}}/locacoes
+Content-Type: application/json
+
+{
+  "clienteId": 2,
+  "veiculoId": 8,
+  "dataRetirada": "2026-11-02",
+  "dataPrevistaDevolucao": "2026-11-06"
+}
+
+### Locação válida de 10 dias (desconto de 10%) -> 201
+POST {{base}}/locacoes
+Content-Type: application/json
+
+{
+  "clienteId": 2,
+  "veiculoId": 3,
+  "dataRetirada": "2026-11-02",
+  "dataPrevistaDevolucao": "2026-11-12",
+  "observacoes": "Cliente pediu cadeirinha infantil"
+}
+
+### Alterar a data prevista (somente locação ainda não iniciada)
+PUT {{base}}/locacoes/2
+Content-Type: application/json
+
+{
+  "dataPrevistaDevolucao": "2026-11-14",
+  "observacoes": "Prorrogada"
+}
+
+### Devolução (calcula atraso / antecipação) -> 200
+POST {{base}}/locacoes/1/devolucao
+Content-Type: application/json
+
+{
+  "quilometragemFinal": 15450
+}
+
+### Devolver de novo -> 422 (locação já finalizada)
+POST {{base}}/locacoes/1/devolucao
+Content-Type: application/json
+
+{
+  "quilometragemFinal": 15500
+}
+
+### Cancelar locação (somente se ainda não iniciou)
+PATCH {{base}}/locacoes/2/cancelar
+
+### Excluir locação ativa -> 409
+DELETE {{base}}/locacoes/2

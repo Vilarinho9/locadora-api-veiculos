@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Locadora de Veículos</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true"></span>
+    <span class="brand-name">Locadora</span>
+    <span class="brand-sub">painel de gestão</span>
+  </div>
+  <nav id="tabs" aria-label="Seções">
+    <button class="tab active" data-tab="dashboard">Dashboard</button>
+    <button class="tab" data-tab="veiculos">Veículos</button>
+    <button class="tab" data-tab="clientes">Clientes</button>
+    <button class="tab" data-tab="locacoes">Locações</button>
+  </nav>
+  <a class="btn ghost" href="/swagger-ui.html" target="_blank" rel="noopener">Swagger UI ↗</a>
+</header>
+
+<main>
+
+  <!-- ===================== DASHBOARD ===================== -->
+  <section id="tab-dashboard" class="panel active">
+    <h1>Visão geral</h1>
+    <div id="cards" class="cards"></div>
+    <p class="hint">
+      Os números acima vêm de <code>GET /api/dashboard</code>. Atrasadas = locações ativas cuja devolução prevista já passou.
+    </p>
+  </section>
+
+  <!-- ===================== VEÍCULOS ===================== -->
+  <section id="tab-veiculos" class="panel">
+    <div class="panel-head">
+      <h1>Veículos</h1>
+      <button id="novo-veiculo" class="btn primary">+ Novo veículo</button>
+    </div>
+    <form id="f-veiculos" class="filters">
+      <label>Placa <input name="placa" placeholder="ABC1D23"></label>
+      <label>Marca <input name="marca"></label>
+      <label>Modelo <input name="modelo"></label>
+      <label>Categoria
+        <select name="categoria">
+          <option value="">Todas</option>
+          <option>ECONOMICO</option><option>INTERMEDIARIO</option><option>SUV</option><option>LUXO</option><option>ESPORTIVO</option>
+        </select>
+      </label>
+      <label>Status
+        <select name="status">
+          <option value="">Todos</option>
+          <option>DISPONIVEL</option><option>ALUGADO</option><option>MANUTENCAO</option>
+        </select>
+      </label>
+      <label>Diária mín. <input name="valorMin" type="number" min="0" step="0.01"></label>
+      <label>Diária máx. <input name="valorMax" type="number" min="0" step="0.01"></label>
+      <div class="filter-actions">
+        <button class="btn" type="submit">Filtrar</button>
+        <button class="btn ghost" type="reset">Limpar</button>
+      </div>
+    </form>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Placa</th><th>Veículo</th><th>Ano</th><th>Categoria</th><th class="num">Diária</th><th class="num">Km</th><th>Status</th><th class="actions-col">Ações</th>
+        </tr></thead>
+        <tbody id="tb-veiculos"></tbody>
+      </table>
+    </div>
+    <div class="pager" id="pg-veiculos"></div>
+  </section>
+
+  <!-- ===================== CLIENTES ===================== -->
+  <section id="tab-clientes" class="panel">
+    <div class="panel-head">
+      <h1>Clientes</h1>
+      <button id="novo-cliente" class="btn primary">+ Novo cliente</button>
+    </div>
+    <form id="f-clientes" class="filters">
+      <label>Nome <input name="nome"></label>
+      <label>CPF <input name="cpf" placeholder="somente números ou com máscara"></label>
+      <label>E-mail <input name="email"></label>
+      <div class="filter-actions">
+        <button class="btn" type="submit">Filtrar</button>
+        <button class="btn ghost" type="reset">Limpar</button>
+      </div>
+    </form>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Nome</th><th>CPF</th><th>E-mail</th><th>Telefone</th><th>Nascimento</th><th>CNH válida até</th><th class="actions-col">Ações</th>
+        </tr></thead>
+        <tbody id="tb-clientes"></tbody>
+      </table>
+    </div>
+    <div class="pager" id="pg-clientes"></div>
+  </section>
+
+  <!-- ===================== LOCAÇÕES ===================== -->
+  <section id="tab-locacoes" class="panel">
+    <div class="panel-head">
+      <h1>Locações</h1>
+      <button id="nova-locacao" class="btn primary">+ Nova locação</button>
+    </div>
+    <form id="f-locacoes" class="filters">
+      <label>Status
+        <select name="status">
+          <option value="">Todos</option>
+          <option>ATIVA</option><option>FINALIZADA</option><option>CANCELADA</option>
+        </select>
+      </label>
+      <label>Cliente <select name="clienteId" id="flt-cliente"><option value="">Todos</option></select></label>
+      <label>Veículo <select name="veiculoId" id="flt-veiculo"><option value="">Todos</option></select></label>
+      <label>Retirada de <input name="retiradaDe" type="date"></label>
+      <label>Retirada até <input name="retiradaAte" type="date"></label>
+      <label class="check"><input name="atrasadas" type="checkbox" value="true"> Somente atrasadas</label>
+      <div class="filter-actions">
+        <button class="btn" type="submit">Filtrar</button>
+        <button class="btn ghost" type="reset">Limpar</button>
+      </div>
+    </form>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Cliente</th><th>Veículo</th><th>Retirada</th><th>Prev. devolução</th><th>Devolvido em</th><th class="num">Previsto</th><th class="num">Final</th><th>Status</th><th class="actions-col">Ações</th>
+        </tr></thead>
+        <tbody id="tb-locacoes"></tbody>
+      </table>
+    </div>
+    <div class="pager" id="pg-locacoes"></div>
+  </section>
+
+</main>
+
+<!-- ===================== DIÁLOGO: VEÍCULO ===================== -->
+<dialog id="dlg-veiculo">
+  <form id="form-veiculo" class="dialog-form" novalidate>
+    <h2 id="dlg-veiculo-titulo">Novo veículo</h2>
+    <div class="grid">
+      <label>Placa * <input name="placa" required placeholder="ABC1D23" maxlength="8"></label>
+      <label>Ano * <input name="ano" type="number" min="1990" max="2100" required></label>
+      <label>Marca * <input name="marca" required></label>
+      <label>Modelo * <input name="modelo" required></label>
+      <label>Categoria *
+        <select name="categoria" required>
+          <option>ECONOMICO</option><option>INTERMEDIARIO</option><option>SUV</option><option>LUXO</option><option>ESPORTIVO</option>
+        </select>
+      </label>
+      <label>Status
+        <select name="status">
+          <option value="DISPONIVEL">DISPONIVEL</option>
+          <option value="MANUTENCAO">MANUTENCAO</option>
+          <option value="ALUGADO" disabled>ALUGADO (definido pelas locações)</option>
+        </select>
+      </label>
+      <label>Valor da diária (R$) * <input name="valorDiaria" type="number" min="0.01" step="0.01" required></label>
+      <label>Quilometragem * <input name="quilometragem" type="number" min="0" required></label>
+    </div>
+    <div class="form-error" role="alert" hidden></div>
+    <div class="dialog-actions">
+      <button type="button" class="btn ghost" data-close>Cancelar</button>
+      <button type="submit" class="btn primary">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ===================== DIÁLOGO: CLIENTE ===================== -->
+<dialog id="dlg-cliente">
+  <form id="form-cliente" class="dialog-form" novalidate>
+    <h2 id="dlg-cliente-titulo">Novo cliente</h2>
+    <div class="grid">
+      <label class="span2">Nome completo * <input name="nome" required maxlength="120"></label>
+      <label>CPF * <input name="cpf" required placeholder="000.000.000-00" maxlength="14"></label>
+      <label>Telefone <input name="telefone" placeholder="(86) 99999-0000" maxlength="20"></label>
+      <label class="span2">E-mail * <input name="email" type="email" required maxlength="120"></label>
+      <label>Data de nascimento * <input name="dataNascimento" type="date" required></label>
+      <label>Nº da CNH * <input name="cnhNumero" required maxlength="11" placeholder="11 dígitos"></label>
+      <label>Validade da CNH * <input name="cnhValidade" type="date" required></label>
+    </div>
+    <div class="form-error" role="alert" hidden></div>
+    <div class="dialog-actions">
+      <button type="button" class="btn ghost" data-close>Cancelar</button>
+      <button type="submit" class="btn primary">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ===================== DIÁLOGO: LOCAÇÃO ===================== -->
+<dialog id="dlg-locacao">
+  <form id="form-locacao" class="dialog-form" novalidate>
+    <h2 id="dlg-locacao-titulo">Nova locação</h2>
+    <div class="grid">
+      <label class="span2">Cliente * <select name="clienteId" required></select></label>
+      <label class="span2">Veículo (somente disponíveis) * <select name="veiculoId" required></select></label>
+      <label>Retirada * <input name="dataRetirada" type="date" required></label>
+      <label>Devolução prevista * <input name="dataPrevistaDevolucao" type="date" required></label>
+      <label class="span2">Observações <input name="observacoes" maxlength="255"></label>
+    </div>
+    <div class="preview" id="preview-locacao" aria-live="polite"></div>
+    <div class="form-error" role="alert" hidden></div>
+    <div class="dialog-actions">
+      <button type="button" class="btn ghost" data-close>Cancelar</button>
+      <button type="submit" class="btn primary">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ===================== DIÁLOGO: DEVOLUÇÃO ===================== -->
+<dialog id="dlg-devolucao">
+  <form id="form-devolucao" class="dialog-form" novalidate>
+    <h2>Registrar devolução</h2>
+    <p id="devolucao-info" class="hint"></p>
+    <div class="grid">
+      <label>Data da devolução <input name="dataDevolucao" type="date"></label>
+      <label>Quilometragem final * <input name="quilometragemFinal" type="number" min="0" required></label>
+    </div>
+    <p class="hint">Atraso: dias extras + multa de 20% da diária por dia. Devolução antecipada: dias usados + taxa de 10% da diária por dia não usado.</p>
+    <div class="form-error" role="alert" hidden></div>
+    <div class="dialog-actions">
+      <button type="button" class="btn ghost" data-close>Cancelar</button>
+      <button type="submit" class="btn primary">Confirmar devolução</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
