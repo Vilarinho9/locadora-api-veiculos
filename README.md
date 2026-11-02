@@ -1,6 +1,6 @@
 # Locadora de Veículos — API REST com Spring Boot
 
-API REST para gestão de uma locadora de veículos: **veículos**, **clientes** e **locações**, com filtros, regras de negócio de maior complexidade, tratamento padronizado de erros HTTP, documentação Swagger e telas web que consomem a API.
+API REST para gestão de uma locadora de veículos: **veículos**, **clientes** e **locações**, com filtros, regras de negócio, tratamento padronizado de erros HTTP, documentação Swagger e telas web que consomem a API.
 
 > Trabalho da disciplina de **Programação Backend**.
 
@@ -8,58 +8,76 @@ API REST para gestão de uma locadora de veículos: **veículos**, **clientes** 
 
 ## Sumário
 
-1. [Requisitos do trabalho × onde estão atendidos](#1-requisitos-do-trabalho--onde-estão-atendidos)
-2. [Tecnologias](#2-tecnologias)
-3. [Como executar](#3-como-executar)
-4. [Modelo de dados](#4-modelo-de-dados)
-5. [Regras de negócio](#5-regras-de-negócio)
-6. [Endpoints](#6-endpoints)
-7. [Filtros, paginação e ordenação](#7-filtros-paginação-e-ordenação)
-8. [Status HTTP e tratamento de exceções](#8-status-http-e-tratamento-de-exceções)
-9. [Documentação Swagger](#9-documentação-swagger)
-10. [Telas (front-end)](#10-telas-front-end)
-11. [Arquitetura e estrutura de pastas](#11-arquitetura-e-estrutura-de-pastas)
-12. [Testes](#12-testes)
-13. [Dados de demonstração](#13-dados-de-demonstração)
+1. [Descrição e objetivo](#1-descrição-e-objetivo)
+2. [Requisitos do trabalho × onde estão atendidos](#2-requisitos-do-trabalho--onde-estão-atendidos)
+3. [Tecnologias](#3-tecnologias)
+4. [Como executar](#4-como-executar)
+5. [Configuração do banco de dados](#5-configuração-do-banco-de-dados)
+6. [Modelo de dados](#6-modelo-de-dados)
+7. [Regras de negócio](#7-regras-de-negócio)
+8. [Endpoints](#8-endpoints)
+9. [Exemplos de utilização dos principais endpoints](#9-exemplos-de-utilização-dos-principais-endpoints)
+10. [Filtros, paginação e ordenação](#10-filtros-paginação-e-ordenação)
+11. [Status HTTP e tratamento de exceções](#11-status-http-e-tratamento-de-exceções)
+12. [Documentação Swagger](#12-documentação-swagger)
+13. [Telas (front-end)](#13-telas-front-end)
+14. [Arquitetura e estrutura de pastas](#14-arquitetura-e-estrutura-de-pastas)
+15. [Testes](#15-testes)
+16. [Dados de demonstração](#16-dados-de-demonstração)
 
 ---
 
-## 1. Requisitos do trabalho × onde estão atendidos
+## 1. Descrição e objetivo
+
+O sistema gerencia o dia a dia de uma locadora de veículos. Ele permite cadastrar a frota (**veículos**) e os **clientes**, registrar **locações** e acompanhar a devolução, sempre aplicando as regras do negócio:
+
+- uma locação liga um cliente a um veículo e só é aceita se o cliente tiver idade mínima, CNH válida e limite de locações disponível, e se o veículo estiver livre;
+- o valor é calculado automaticamente, com **desconto progressivo** para períodos longos;
+- na devolução, o sistema calcula **multa por atraso** ou **taxa de devolução antecipada**, atualiza a quilometragem e libera o veículo.
+
+**Objetivo:** demonstrar uma API REST completa em Spring Boot, com CRUD, filtros, regras de negócio, tratamento correto de status HTTP, documentação com Swagger e um painel web conectado ao backend.
+
+---
+
+## 2. Requisitos do trabalho × onde estão atendidos
 
 | Requisito | Como foi atendido |
 |---|---|
 | Spring Boot com no mínimo 2 tabelas relacionadas | 3 tabelas: `clientes`, `veiculos` e `locacoes` (a locação se relaciona com cliente e veículo via `@ManyToOne`) |
-| CRUD completo para as tabelas | `Veiculo`, `Cliente` e `Locacao`: criar, listar, buscar por id, atualizar e excluir ([endpoints](#6-endpoints)) |
-| Filtragem de dados | Filtros dinâmicos combináveis com **JPA Specifications** + paginação e ordenação ([seção 7](#7-filtros-paginação-e-ordenação)) |
-| Regras de negócio mais complexas | Idade mínima, CNH, disponibilidade, limite de locações, desconto progressivo, multa por atraso, taxa de devolução antecipada, controle de concorrência ([seção 5](#5-regras-de-negócio)) |
-| Status HTTP e exceções tratados | `GlobalExceptionHandler` com 400/404/405/409/422/500 em formato único de erro ([seção 8](#8-status-http-e-tratamento-de-exceções)) |
-| Documentação com Swagger | springdoc-openapi: `/swagger-ui.html` ([seção 9](#9-documentação-swagger)) |
-| Telas conectadas ao backend | Painel web (HTML/CSS/JS) servido pela própria aplicação em `/` ([seção 10](#10-telas-front-end)) |
+| CRUD completo para as tabelas | `Veiculo`, `Cliente` e `Locacao`: criar, listar, buscar por id, atualizar e excluir ([endpoints](#8-endpoints)) |
+| Filtragem de dados | Filtros dinâmicos combináveis com **JPA Specifications** + paginação e ordenação ([seção 10](#10-filtros-paginação-e-ordenação)) |
+| Regras de negócio mais complexas | Idade mínima, CNH, disponibilidade, limite de locações, desconto progressivo, multa por atraso, taxa de devolução antecipada, controle de concorrência ([seção 7](#7-regras-de-negócio)) |
+| Status HTTP e exceções tratados | `GlobalExceptionHandler` com 400/404/405/409/422/500 em formato único de erro ([seção 11](#11-status-http-e-tratamento-de-exceções)) |
+| Documentação com Swagger | springdoc-openapi: `/swagger-ui.html` ([seção 12](#12-documentação-swagger)) |
+| Telas conectadas ao backend | Painel web (HTML/CSS/JS) servido pela própria aplicação em `/` ([seção 13](#13-telas-front-end)) |
+| Testes | Testes unitários e de integração ([seção 15](#15-testes)) |
 | README bem estruturado | Este arquivo |
 
 ---
 
-## 2. Tecnologias
+## 3. Tecnologias
 
 - **Java 17+** e **Spring Boot 3.3.5** (Web, Data JPA, Validation)
 - **Hibernate / JPA** com **H2** em arquivo (padrão, sem instalar nada) — **PostgreSQL** opcional via perfil
 - **springdoc-openapi 2.6.0** (Swagger UI)
 - **JUnit 5 + MockMvc** para testes
+- **Maven** para build e dependências
 - Front-end em **HTML, CSS e JavaScript puro** (sem build, sem dependências)
 
 ---
 
-## 3. Como executar
+## 4. Como executar
 
 ### Pré-requisitos
 
 - **JDK 17 ou superior** (`java -version`)
-- **Maven 3.9+** (`mvn -version`) — ou abra o projeto no IntelliJ / Eclipse / VS Code, que já trazem o Maven embutido
+- **Maven 3.9+** (`mvn -version`) — ou abra o projeto no IntelliJ / Eclipse / VS Code, que já trazem suporte ao Maven
 
 ### Passo a passo
 
 ```bash
-# 1. entre na pasta do projeto
+# 1. clone o repositório e entre na pasta do projeto (a que contém o pom.xml)
+git clone <URL deste repositório>
 cd locadora-api
 
 # 2. suba a aplicação
@@ -75,6 +93,8 @@ Na primeira execução o banco é criado e populado com dados de demonstração 
 | **OpenAPI (JSON)** | http://localhost:8080/v3/api-docs |
 | **Console do H2** | http://localhost:8080/h2-console — JDBC URL `jdbc:h2:file:./data/locadora`, usuário `sa`, senha em branco |
 
+Para parar a aplicação, use `Ctrl+C` no terminal.
+
 ### Gerar o .jar e executar
 
 ```bash
@@ -82,22 +102,56 @@ mvn clean package
 java -jar target/locadora-api-1.0.0.jar
 ```
 
+### Problemas comuns
+
+| Sintoma | Solução |
+|---|---|
+| `mvn` não é reconhecido | Instale o Maven (https://maven.apache.org/download.cgi), adicione a pasta `bin` ao `PATH` e abra um novo terminal. Ou abra o projeto em uma IDE. |
+| `Port 8080 was already in use` | Outro programa usa a porta 8080. Rode em outra porta e use-a nos endereços acima: `mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=8081`. No PowerShell, coloque o parâmetro entre aspas: `"-Dspring-boot.run.arguments=--server.port=8081"`. |
+| Erro ao criar a pasta `data` (Windows) | Pastas protegidas, como *Documentos*, podem bloquear a escrita. Rode o projeto de outra pasta (ex.: `C:\projetos`) ou use banco em memória: `"-Dspring-boot.run.arguments=--spring.datasource.url=jdbc:h2:mem:locadora"`. |
+
+---
+
+## 5. Configuração do banco de dados
+
+### H2 em arquivo (padrão)
+
+Não exige instalação. As configurações estão em `src/main/resources/application.properties`:
+
+| Propriedade | Valor |
+|---|---|
+| `spring.datasource.url` | `jdbc:h2:file:./data/locadora` (arquivo criado na pasta `data/`) |
+| `spring.datasource.username` / `password` | `sa` / (vazia) |
+| `spring.jpa.hibernate.ddl-auto` | `update` (as tabelas são criadas a partir das entidades) |
+| `spring.h2.console.path` | `/h2-console` |
+| `app.seed` | `true` (carrega os dados de demonstração quando o banco está vazio; use `false` para desativar) |
+
+O banco persiste entre execuções. Para inspecioná-lo, acesse o console do H2 (endereço na seção anterior).
+
 ### Zerar o banco
 
 Pare a aplicação e apague a pasta `data/` (criada ao lado do projeto). Na próxima execução ela é recriada com os dados de demonstração.
 
-### Usar PostgreSQL (opcional)
+### PostgreSQL (opcional)
 
-```bash
-# crie antes um banco chamado "locadora"
-mvn spring-boot:run -Dspring-boot.run.profiles=postgres
-```
+1. Crie um banco chamado `locadora`. Com Docker, por exemplo:
+   ```bash
+   docker run --name locadora-db -e POSTGRES_DB=locadora -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:16
+   ```
+2. Suba a aplicação com o perfil `postgres`:
+   ```bash
+   mvn spring-boot:run -Dspring-boot.run.profiles=postgres
+   ```
 
-Configuração em `application-postgres.properties`. Variáveis opcionais: `DB_URL`, `DB_USER`, `DB_PASSWORD`.
+Configuração em `application-postgres.properties`. Valores padrão: `jdbc:postgresql://localhost:5432/locadora`, usuário `postgres`, senha `postgres`. Podem ser trocados pelas variáveis de ambiente `DB_URL`, `DB_USER` e `DB_PASSWORD`.
+
+### Banco dos testes
+
+Os testes usam H2 **em memória** (`src/test/resources/application.properties`), sem tocar nos dados da aplicação.
 
 ---
 
-## 4. Modelo de dados
+## 6. Modelo de dados
 
 ```mermaid
 erDiagram
@@ -150,7 +204,7 @@ erDiagram
 
 ---
 
-## 5. Regras de negócio
+## 7. Regras de negócio
 
 ### Cadastros
 
@@ -159,6 +213,7 @@ erDiagram
 | CPF válido (dígitos verificadores; aceita com ou sem máscara) | `400` |
 | CPF e e-mail únicos por cliente | `409` |
 | Cliente com no mínimo 18 anos | `422` |
+| CNH com exatamente 11 dígitos | `400` |
 | Placa válida (padrão antigo `ABC1234` ou Mercosul `ABC1D23`), normalizada em maiúsculas e sem hífen; placa única | `400` / `409` |
 | `ALUGADO` não pode ser definido manualmente (só as locações mudam esse status) | `422` |
 | Veículo alugado não pode ter o status alterado manualmente | `422` |
@@ -209,7 +264,7 @@ Após a devolução a locação vira `FINALIZADA`, a quilometragem do veículo �
 
 ---
 
-## 6. Endpoints
+## 8. Endpoints
 
 ### Veículos — `/api/veiculos`
 
@@ -249,7 +304,138 @@ Frota por status, total de clientes, locações ativas/atrasadas e receita das l
 
 ---
 
-## 7. Filtros, paginação e ordenação
+## 9. Exemplos de utilização dos principais endpoints
+
+Com a aplicação no ar em `http://localhost:8080`. As respostas abaixo foram resumidas; os `id` podem variar conforme os dados existentes.
+
+> **Datas:** a retirada de uma locação não pode estar no passado. Ajuste as datas dos exemplos para hoje em diante.
+>
+> **Windows / PowerShell:** `curl` é um apelido de outro comando; use `curl.exe`, ou teste direto pelo [Swagger](#12-documentação-swagger) ou pelo arquivo [`docs/requests.http`](docs/requests.http), que reúne dezenas de requisições prontas com as respostas esperadas.
+
+### Veículos
+
+**Cadastrar** — `201 Created` com o header `Location: http://localhost:8080/api/veiculos/9`
+
+```bash
+curl -X POST http://localhost:8080/api/veiculos \
+  -H "Content-Type: application/json" \
+  -d '{"placa":"KWD1A23","marca":"Renault","modelo":"Kwid","ano":2024,"categoria":"ECONOMICO","valorDiaria":95.00,"quilometragem":1200}'
+```
+
+```json
+{
+  "id": 9, "placa": "KWD1A23", "marca": "Renault", "modelo": "Kwid", "ano": 2024,
+  "categoria": "ECONOMICO", "valorDiaria": 95.00, "quilometragem": 1200, "status": "DISPONIVEL"
+}
+```
+
+**Atualizar** — `200 OK` (o PUT recebe o objeto completo)
+
+```bash
+curl -X PUT http://localhost:8080/api/veiculos/9 \
+  -H "Content-Type: application/json" \
+  -d '{"placa":"KWD1A23","marca":"Renault","modelo":"Kwid","ano":2024,"categoria":"ECONOMICO","valorDiaria":99.90,"quilometragem":1200}'
+```
+
+**Buscar por id** — `200 OK` (ou `404` se não existir)
+
+```bash
+curl http://localhost:8080/api/veiculos/9
+```
+
+**Listar com filtros** — `200 OK`, resposta paginada
+
+```bash
+curl "http://localhost:8080/api/veiculos?categoria=SUV&status=DISPONIVEL&sort=valorDiaria,asc"
+```
+
+```json
+{ "content": [
+    { "id": 3, "placa": "QWE3F67", "modelo": "T-Cross", "valorDiaria": 220.00, "status": "DISPONIVEL" },
+    { "id": 5, "placa": "MNO5H01", "modelo": "Compass", "valorDiaria": 300.00, "status": "DISPONIVEL" }
+  ],
+  "page": 0, "size": 10, "totalElements": 2, "totalPages": 1 }
+```
+
+**Excluir** — `204 No Content` (ou `409` se o veículo está alugado ou tem locações)
+
+```bash
+curl -X DELETE http://localhost:8080/api/veiculos/9
+```
+
+### Clientes
+
+**Cadastrar** — `201 Created`
+
+```bash
+curl -X POST http://localhost:8080/api/clientes \
+  -H "Content-Type: application/json" \
+  -d '{"nome":"Joana Pereira","cpf":"168.995.350-09","email":"joana@email.com","telefone":"(86) 99999-0005","dataNascimento":"1992-05-20","cnhNumero":"45678901234","cnhValidade":"2031-06-30"}'
+```
+
+**CPF inválido** — `400 Bad Request`, com o campo que falhou
+
+```bash
+curl -X POST http://localhost:8080/api/clientes \
+  -H "Content-Type: application/json" \
+  -d '{"nome":"Teste","cpf":"111.111.111-11","email":"teste@email.com","dataNascimento":"1990-01-01","cnhNumero":"12345678901","cnhValidade":"2030-01-01"}'
+```
+
+```json
+{ "status": 400, "mensagem": "Dados inválidos: verifique os campos informados",
+  "campos": [ { "campo": "cpf", "mensagem": "CPF inválido" } ] }
+```
+
+### Locações
+
+**Registrar** — `201 Created`. Exemplo de 10 dias com diária de R$ 130,00: subtotal de R$ 1.300,00, desconto de 10% e valor previsto de R$ 1.170,00.
+
+```bash
+curl -X POST http://localhost:8080/api/locacoes \
+  -H "Content-Type: application/json" \
+  -d '{"clienteId":2,"veiculoId":2,"dataRetirada":"2026-11-05","dataPrevistaDevolucao":"2026-11-15","observacoes":"Cliente solicitou cadeirinha infantil"}'
+```
+
+```json
+{
+  "id": 2, "clienteId": 2, "clienteNome": "Carlos Souza",
+  "veiculoId": 2, "veiculoDescricao": "RIO2E45 - Hyundai HB20",
+  "dataRetirada": "2026-11-05", "dataPrevistaDevolucao": "2026-11-15", "dataDevolucao": null,
+  "valorDiaria": 130.00, "desconto": 130.00, "valorPrevisto": 1170.00, "multa": null, "valorFinal": null,
+  "status": "ATIVA", "atrasada": false, "observacoes": "Cliente solicitou cadeirinha infantil"
+}
+```
+
+**Regra de negócio violada** — `422 Unprocessable Entity` (ex.: cliente com 23 anos alugando um veículo `LUXO`; resposta na [seção 11](#11-status-http-e-tratamento-de-exceções))
+
+**Registrar a devolução** — `200 OK`. A data é opcional (se omitida, vale hoje); a resposta traz `multa` e `valorFinal` calculados e a locação passa a `FINALIZADA`.
+
+```bash
+curl -X POST http://localhost:8080/api/locacoes/1/devolucao \
+  -H "Content-Type: application/json" \
+  -d '{"quilometragemFinal":15450}'
+```
+
+**Cancelar** — `200 OK` (só locação ativa que ainda não começou)
+
+```bash
+curl -X PATCH http://localhost:8080/api/locacoes/2/cancelar
+```
+
+### Dashboard
+
+```bash
+curl http://localhost:8080/api/dashboard
+```
+
+```json
+{ "totalVeiculos": 8, "veiculosDisponiveis": 6, "veiculosAlugados": 1, "veiculosManutencao": 1,
+  "totalClientes": 4, "locacoesAtivas": 1, "locacoesAtrasadas": 0, "receitaTotal": 0 }
+```
+
+---
+
+## 10. Filtros, paginação e ordenação
 
 Todos os filtros são **opcionais e combináveis**. A resposta paginada segue o formato:
 
@@ -280,7 +466,7 @@ Valores inválidos (ex.: `status=VOANDO` ou `sort=campoInexistente`) retornam `4
 
 ---
 
-## 8. Status HTTP e tratamento de exceções
+## 11. Status HTTP e tratamento de exceções
 
 O `GlobalExceptionHandler` (`@RestControllerAdvice`) traduz qualquer exceção em um **formato único de erro**:
 
@@ -327,7 +513,7 @@ As exceções do domínio são `RecursoNaoEncontradoException` (404), `ConflitoE
 
 ---
 
-## 9. Documentação Swagger
+## 12. Documentação Swagger
 
 Com a aplicação no ar, acesse **http://localhost:8080/swagger-ui.html**.
 
@@ -336,11 +522,11 @@ Com a aplicação no ar, acesse **http://localhost:8080/swagger-ui.html**.
 - Os DTOs trazem exemplos prontos: clique em **Try it out** e **Execute**
 - O contrato OpenAPI em JSON fica em `/v3/api-docs` (pode ser importado no Postman/Insomnia)
 
-Um arquivo com requisições prontas para demonstração está em [`docs/requests.http`](docs/requests.http) (IntelliJ HTTP Client ou extensão REST Client do VS Code).
+Um arquivo com requisições prontas está em [`docs/requests.http`](docs/requests.http) (IntelliJ HTTP Client ou extensão REST Client do VS Code).
 
 ---
 
-## 10. Telas (front-end)
+## 13. Telas (front-end)
 
 O painel é servido pela própria aplicação em **http://localhost:8080** (arquivos em `src/main/resources/static`). Como front e API estão na mesma origem, não há configuração extra.
 
@@ -355,7 +541,7 @@ As mensagens de erro da API (validações `400`, regras `422`, conflitos `409`) 
 
 ---
 
-## 11. Arquitetura e estrutura de pastas
+## 14. Arquitetura e estrutura de pastas
 
 Arquitetura em camadas: **Controller → Service → Repository → Banco**. As regras de negócio ficam nos *services*; os controllers só recebem/validam a requisição e devolvem o status HTTP correto.
 
@@ -364,7 +550,7 @@ locadora-api/
 ├── pom.xml
 ├── README.md
 ├── docs/
-│   ├── requests.http            # requisições prontas para a demonstração
+│   ├── requests.http            # requisições prontas para testar a API
 │   └── ROTEIRO_VIDEO.md         # roteiro sugerido para o vídeo
 └── src/
     ├── main/
@@ -398,7 +584,7 @@ Decisões de projeto:
 
 ---
 
-## 12. Testes
+## 15. Testes
 
 ```bash
 mvn test
@@ -412,49 +598,15 @@ mvn test
 
 ---
 
-## 13. Dados de demonstração
+## 16. Dados de demonstração
 
 Na primeira execução são carregados **8 veículos**, **4 clientes** e **1 locação ativa**, escolhidos para demonstrar as regras:
 
 | Dado | Para demonstrar |
 |---|---|
-| **Ana Costa** (23 anos) × BMW 320i / Camaro (`LUXO`/`ESPORTIVO`) | `422` — idade mínima de 25 anos para categorias premium |
-| **Pedro Lima** (CNH vencida) | `422` — CNH vencida antes da devolução |
-| **Fiat Mobi** (em manutenção) | `422` — veículo indisponível |
-| **Fiat Argo** (alugado por Maria da Silva) | `422` — veículo já alugado; `409` ao tentar excluir |
-| **Maria da Silva** | `409` ao tentar excluir (tem locação); devolver a locação mostra o cálculo da taxa antecipada |
+| **Ana Costa** (23 anos, id 3) × BMW 320i (id 6) / Camaro (id 7) (`LUXO`/`ESPORTIVO`) | `422` — idade mínima de 25 anos para categorias premium |
+| **Pedro Lima** (id 4, CNH vencida) | `422` — CNH vencida antes da devolução |
+| **Fiat Mobi** (id 8, em manutenção) | `422` — veículo indisponível |
+| **Fiat Argo** (id 1, alugado por Maria da Silva) | `422` — veículo já alugado; `409` ao tentar excluir |
+| **Maria da Silva** (id 1) | `409` ao tentar excluir (tem locação); devolver a locação mostra o cálculo da taxa antecipada |
 | CPF inválido ao cadastrar cliente | `400` com o campo `cpf` na resposta |
-
-
----
-
-## 14. Entrega no GitHub
-
-O repositório deve ter a pasta `src/`, o arquivo `pom.xml`, este `README.md`, o `.gitignore` e a pasta `docs/`. Não envie arquivos gerados ou dados locais, como `target/`, `data/`, configurações pessoais da IDE ou credenciais do banco.
-
-### Publicar o projeto
-
-Crie um repositório vazio no GitHub e, no terminal, dentro da pasta `locadora-api`, execute:
-
-```bash
-git init
-git add .
-git commit -m "Entrega inicial da API de locadora"
-git branch -M main
-git remote add origin https://github.com/SEU-USUARIO/locadora-api.git
-git push -u origin main
-```
-
-Substitua `SEU-USUARIO` pelo seu usuário do GitHub. Se o projeto já estiver conectado a um repositório Git, não execute `git init` novamente. Nesse caso, confira o remoto com `git remote -v`, depois faça `git add .`, `git commit` e `git push`.
-
-### Checklist final
-
-- [ ] Repositório do GitHub criado e acessível ao professor.
-- [ ] Código-fonte completo enviado, incluindo `src/main` e `src/test`.
-- [ ] `README.md` com objetivo, tecnologias, execução, banco de dados, Swagger e exemplos de endpoints.
-- [ ] `docs/requests.http` disponível para testar os principais recursos.
-- [ ] Nenhuma senha, token, arquivo `.env`, pasta `target/` ou banco local foi enviado.
-- [ ] Projeto executado localmente e testes verificados com `mvn test`.
-- [ ] Link do repositório incluído na plataforma de entrega da disciplina.
-
-**Link do repositório:** adicione aqui a URL do GitHub depois de publicar o projeto.
